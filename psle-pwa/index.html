@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MathSolve">
+<meta name="theme-color" content="#6c5ce7">
+<meta name="description" content="Snap a PSLE math question and get instant step-by-step solutions">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+
+<title>MathSolve PSLE</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --purple: #6c5ce7;
+  --purple-mid: #8b7ff0;
+  --purple-light: #a29bfe;
+  --purple-pale: #ede9ff;
+  --purple-dark: #4834d4;
+  --ink: #1c1c2e;
+  --ink-mid: #52527a;
+  --ink-soft: #9999bb;
+  --surface: #f5f4ff;
+  --card: #ffffff;
+  --teal: #00cec9;
+  --teal-pale: #e0fafa;
+  --green: #00b894;
+  --green-pale: #e8fdf7;
+  --amber: #fdcb6e;
+  --amber-pale: #fff8e6;
+  --red: #e17055;
+  --red-pale: #fff1ee;
+  --safe-top: env(safe-area-inset-top, 44px);
+  --safe-bottom: env(safe-area-inset-bottom, 34px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* ── App shell ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Status bar spacer ── */
+.status-bar {
+  height: var(--safe-top);
+  background: var(--purple-dark);
+  flex-shrink: 0;
+}
+
+/* ── Top bar ── */
+.topbar {
+  background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple) 100%);
+  padding: 12px 20px 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-logo {
+  font-family: 'Nunito', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+
+.logo-pill {
+  background: rgba(255,255,255,0.2);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.95);
+}
+
+.topbar-right {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+}
+
+/* ── Scrollable content ── */
+#scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 16px calc(var(--safe-bottom) + 100px);
+}
+
+/* ── Upload section ── */
+.snap-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  border: 2px dashed #ccc9f7;
+  margin-bottom: 14px;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.snap-card.has-image {
+  border-style: solid;
+  border-color: var(--purple-light);
+  padding: 16px;
+}
+
+.snap-emoji {
+  font-size: 52px;
+  display: block;
+  margin-bottom: 12px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.snap-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.snap-sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin-bottom: 22px;
+}
+
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.snap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.15s;
+  -webkit-appearance: none;
+}
+
+.snap-btn:active { transform: scale(0.96); opacity: 0.85; }
+
+.btn-camera {
+  background: var(--purple);
+  color: white;
+  box-shadow: 0 4px 18px rgba(108,92,231,0.35);
+}
+
+.btn-gallery {
+  background: var(--purple-pale);
+  color: var(--purple-dark);
+}
+
+/* Image preview */
+.preview-section { position: relative; }
+
+.preview-img-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  margin-bottom: 12px;
+}
+
+#preview-img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  display: block;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: white;
+  border: none;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.change-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.change-btn {
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--purple-light);
+  background: transparent;
+  color: var(--purple);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+/* ── Paste hint ── */
+.paste-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding: 6px 0 2px;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+
+/* ── Sticky solve button ── */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(245, 244, 255, 0.92);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  padding: 12px 16px;
+  padding-bottom: calc(12px + var(--safe-bottom));
+  border-top: 1px solid rgba(108,92,231,0.12);
+  z-index: 50;
+}
+
+#solve-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple-mid) 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 6px 24px rgba(108,92,231,0.4);
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-appearance: none;
+  letter-spacing: 0.01em;
+}
+
+#solve-btn:active:not(:disabled) { transform: scale(0.98); }
+#solve-btn:disabled { opacity: 0.4; box-shadow: none; }
+
+/* ── Loading ── */
+.loading-card {
+  display: none;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 36px 20px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(108,92,231,0.1);
+  margin-bottom: 16px;
+}
+
+.loading-card.show { display: block; }
+
+.loader-ring {
+  width: 56px; height: 56px;
+  border: 4px solid var(--purple-pale);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-msg {
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px; font-weight: 800; color: var(--ink); margin-bottom: 6px;
+}
+
+.loading-sub { font-size: 13px; color: var(--ink-soft); }
+
+/* ── Error ── */
+.error-banner {
+  display: none;
+  background: var(--red-pale);
+  border: 1.5px solid #f5c4b6;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 14px; color: #a0380a; font-weight: 500;
+  margin-bottom: 14px;
+  display: none; align-items: center; gap: 10px;
+  line-height: 1.5;
+}
+
+.error-banner.show { display: flex; }
+
+/* ── Results ── */
+.results { display: none; }
+.results.show { display: block; }
+
+/* Question card */
+.q-card {
+  background: var(--purple-pale);
+  border-left: 4px solid var(--purple);
+  border-radius: 0 14px 14px 0;
+  padding: 14px 16px;
+  font-size: 14px; line-height: 1.75;
+  color: var(--ink); font-style: italic;
+  margin-bottom: 6px;
+}
+
+.q-type-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--purple);
+  color: white; font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  margin-bottom: 20px; letter-spacing: 0.04em;
+}
+
+/* Section header */
+.sec-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; margin-top: 24px;
+}
+
+.sec-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+
+.sec-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 17px; font-weight: 800; color: var(--ink);
+}
+
+/* Step cards */
+.step-card {
+  background: var(--card);
+  border-radius: 16px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(108,92,231,0.07);
+  border: 1.5px solid #eceaff;
+  animation: slideIn 0.35s ease both;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step-hd {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--purple-pale); color: var(--purple);
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.step-ttl { font-weight: 600; font-size: 14px; flex: 1; color: var(--ink); }
+
+.step-chev {
+  font-size: 13px; color: var(--ink-soft);
+  transition: transform 0.2s; flex-shrink: 0;
+}
+
+.step-card.open .step-chev { transform: rotate(180deg); }
+
+.step-bd {
+  display: none;
+  border-top: 1.5px solid #f0eeff;
+  padding: 14px 16px;
+}
+
+.step-card.open .step-bd { display: block; }
+
+.step-explain {
+  font-size: 14px; line-height: 1.75; color: var(--ink); margin-bottom: 12px;
+}
+
+.math-box {
+  background: #f8f7ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px; font-weight: 700;
+  color: var(--purple-dark);
+  line-height: 1.9; white-space: pre-line;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--purple-light);
+}
+
+.hint-box {
+  background: var(--amber-pale);
+  border-radius: 12px; padding: 10px 14px;
+  font-size: 13px; color: #7a5800; line-height: 1.6;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+
+.hint-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* Answer */
+.answer-card {
+  background: linear-gradient(135deg, #e9fdf7 0%, #d6faf0 100%);
+  border: 2px solid var(--green);
+  border-radius: 18px;
+  padding: 20px;
+  animation: slideIn 0.4s ease both;
+}
+
+.ans-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--green);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+}
+
+.ans-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 19px; font-weight: 900; color: #004d3a;
+  line-height: 1.4;
+}
+
+/* Tips */
+.tip-item {
+  background: var(--teal-pale);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: 10px;
+  animation: slideIn 0.35s ease both;
+}
+
+.tip-dot {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: var(--teal); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+
+.tip-text { font-size: 13px; line-height: 1.65; color: #00403d; }
+.tip-text b { display: block; margin-bottom: 2px; font-weight: 700; color: #002b29; }
+
+/* Mistakes */
+.mistake-item {
+  background: var(--red-pale);
+  border-radius: 14px; padding: 14px 16px;
+  border-left: 3px solid var(--red);
+  margin-bottom: 10px;
+  animation: slideIn 0.35s ease both;
+}
+
+.mistake-tag {
+  font-size: 13px; font-weight: 700; color: #a0380a;
+  margin-bottom: 5px; display: flex; align-items: center; gap: 6px;
+}
+
+.mistake-why { font-size: 13px; color: #8c3010; line-height: 1.6; margin-bottom: 8px; }
+
+.correct-chip {
+  background: var(--green-pale);
+  border-radius: 10px; padding: 8px 12px;
+  font-size: 13px; color: var(--green); font-weight: 600;
+  border-left: 3px solid var(--green);
+  line-height: 1.5;
+}
+
+.correct-chip span { color: var(--ink-mid); font-weight: 400; }
+
+/* Install prompt */
+.install-banner {
+  display: none;
+  background: linear-gradient(135deg, var(--purple-dark), var(--purple-mid));
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.install-banner.show { display: block; }
+
+.install-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px; font-weight: 800; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.install-steps {
+  font-size: 13px; line-height: 1.8; opacity: 0.9;
+}
+
+.install-close {
+  float: right; background: none; border: none;
+  color: white; font-size: 18px; cursor: pointer; opacity: 0.8;
+  margin-top: -2px;
+}
+
+/* Hidden inputs */
+input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="status-bar"></div>
+
+  <div class="topbar">
+    <div class="app-logo">🧮 MathSolve <span class="logo-pill">PSLE</span></div>
+    <div class="topbar-right">P1–P6 · SG</div>
+  </div>
+
+  <div id="scroll-area">
+
+    <!-- Install banner (shown on non-standalone) -->
+    <div class="install-banner" id="install-banner">
+      <button class="install-close" onclick="document.getElementById('install-banner').classList.remove('show')">✕</button>
+      <div class="install-title">📲 Add to Home Screen</div>
+      <div class="install-steps">
+        Tap <strong>Share ↑</strong> → <strong>"Add to Home Screen"</strong><br>
+        to use MathSolve like a real app!
+      </div>
+    </div>
+
+    <!-- Upload card -->
+    <div class="snap-card" id="snap-card">
+
+      <!-- Empty state -->
+      <div id="empty-state">
+        <span class="snap-emoji">📸</span>
+        <div class="snap-title">Snap your question</div>
+        <div class="snap-sub">Take a photo of any PSLE worksheet or upload a screenshot — we'll solve it!</div>
+        <div class="btn-row">
+          <button class="snap-btn btn-camera" onclick="openCamera()">📷 Camera</button>
+          <button class="snap-btn btn-gallery" onclick="openGallery()">🖼️ Gallery</button>
+        </div>
+      </div>
+
+      <!-- Preview state -->
+      <div class="preview-section" id="preview-state" style="display:none">
+        <button class="remove-btn" onclick="clearImage()">✕</button>
+        <div class="preview-img-wrap">
+          <img id="preview-img" alt="Your question">
+        </div>
+        <div class="change-row">
+          <button class="change-btn" onclick="openCamera()">📷 Retake</button>
+          <button class="change-btn" onclick="openGallery()">🖼️ Change</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="paste-hint">💡 You can also paste a screenshot (⌘V / Ctrl+V)</div>
+
+    <!-- Loading -->
+    <div class="loading-card" id="loading-card">
+      <div class="loader-ring"></div>
+      <div class="loading-msg" id="loading-msg">Reading your question…</div>
+      <div class="loading-sub">Working through the maths step by step</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="error-banner">
+      ⚠️ <span id="error-text">Couldn't read the image. Please try a clearer photo.</span>
+    </div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+
+      <div class="q-card" id="q-display"></div>
+      <span class="q-type-badge" id="q-type">📐 Math</span>
+
+      <div class="sec-head">
+        <div class="sec-icon" style="background:#ede9ff">📝</div>
+        <span class="sec-title">Step-by-step solution</span>
+      </div>
+      <div id="steps-wrap"></div>
+
+      <div class="sec-head">
+        <div class="sec-icon" style="background:#e8fdf7">✅</div>
+        <span class="sec-title">Final answer</span>
+      </div>
+      <div class="answer-card">
+        <div class="ans-label">⭐ Correct answer</div>
+        <div class="ans-text" id="ans-text"></div>
+      </div>
+
+      <div class="sec-head">
+        <div class="sec-icon" style="background:#e0fafa">💡</div>
+        <span class="sec-title">Exam tips</span>
+      </div>
+      <div id="tips-wrap"></div>
+
+      <div class="sec-head">
+        <div class="sec-icon" style="background:#fff1ee">⚠️</div>
+        <span class="sec-title">Common mistakes to avoid</span>
+      </div>
+      <div id="mistakes-wrap"></div>
+
+      <div style="height:16px"></div>
+    </div>
+
+  </div><!-- /scroll-area -->
+
+  <!-- Sticky bottom solve button -->
+  <div class="bottom-bar">
+    <button id="solve-btn" onclick="solveQuestion()" disabled>
+      ✨ Solve This Question!
+    </button>
+  </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="camera-input" accept="image/*" capture="environment">
+<input type="file" id="gallery-input" accept="image/*">
+
+<script>
+// ── Service Worker ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── Show install banner if not in standalone ──
+if (!window.navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches) {
+  setTimeout(() => document.getElementById('install-banner').classList.add('show'), 1500);
+}
+
+// ── State ──
+let imageBase64 = null;
+let imageType = 'image/jpeg';
+
+const loadMsgs = [
+  'Reading your question…',
+  'Figuring out the method…',
+  'Working through the steps…',
+  'Checking the answer…',
+  'Almost ready! 🎉'
+];
+let loadTimer = null;
+
+// ── File inputs ──
+document.getElementById('camera-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+document.getElementById('gallery-input').addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+function openCamera() { document.getElementById('camera-input').click(); }
+function openGallery() { document.getElementById('gallery-input').click(); }
+
+function loadFile(file) {
+  imageType = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result.split(',')[1];
+    document.getElementById('preview-img').src = e.target.result;
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('preview-state').style.display = 'block';
+    document.getElementById('snap-card').style.borderStyle = 'solid';
+    document.getElementById('solve-btn').disabled = false;
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('error-banner').classList.remove('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  imageBase64 = null;
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('preview-state').style.display = 'none';
+  document.getElementById('snap-card').style.borderStyle = 'dashed';
+  document.getElementById('solve-btn').disabled = true;
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('camera-input').value = '';
+  document.getElementById('gallery-input').value = '';
+}
+
+// Paste support
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
+  }
+});
+
+// ── Loading ──
+function showLoading(on) {
+  const card = document.getElementById('loading-card');
+  if (on) {
+    card.classList.add('show');
+    let i = 0;
+    document.getElementById('loading-msg').textContent = loadMsgs[0];
+    loadTimer = setInterval(() => {
+      i = (i + 1) % loadMsgs.length;
+      document.getElementById('loading-msg').textContent = loadMsgs[i];
+    }, 2200);
+  } else {
+    card.classList.remove('show');
+    clearInterval(loadTimer);
+  }
+}
+
+// ── Solve ──
+async function solveQuestion() {
+  if (!imageBase64) return;
+
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('error-banner').classList.remove('show');
+  document.getElementById('solve-btn').disabled = true;
+  showLoading(true);
+
+  // Scroll to loading
+  document.getElementById('loading-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const system = `You are an expert PSLE Singapore primary school mathematics tutor.
+A student has uploaded a photo of a math question. Read it carefully and solve it using Singapore primary school methods.
+
+Return ONLY a valid JSON object (no markdown, no code fences) with this exact structure:
+{
+  "question": "The full question text read from the image",
+  "question_type": "e.g. Fractions, Ratio, Percentage, Speed, Area & Perimeter, Algebra, etc.",
+  "steps": [
+    {
+      "title": "Step title (max 5 words)",
+      "explanation": "Friendly explanation a P5/P6 child understands (2-3 sentences)",
+      "working": "Mathematical working line by line using actual numbers",
+      "hint": "Memory tip or concept reminder"
+    }
+  ],
+  "final_answer": "Complete answer with units as a full sentence",
+  "tips": [
+    { "title": "Tip title (4 words max)", "body": "Exam strategy or concept tip" }
+  ],
+  "mistakes": [
+    {
+      "mistake": "Common wrong approach description",
+      "why_wrong": "Why it's wrong (1 sentence)",
+      "correct": "What to do instead"
+    }
+  ]
+}
+
+Rules:
+- 3–6 steps, 2–3 tips, 2–3 mistakes
+- Use Singapore math language: units, parts, remainder, model method, etc.
+- Keep tone warm and encouraging for a child
+- Show actual numbers in working, not just descriptions
+- If image is unclear, still attempt based on what's visible`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imageType, data: imageBase64 } },
+            { type: 'text', text: 'Please solve this PSLE math question step by step.' }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const raw = data.content.map(b => b.text || '').join('');
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    showLoading(false);
+    renderResults(parsed);
+
+  } catch (err) {
+    showLoading(false);
+    document.getElementById('solve-btn').disabled = false;
+    document.getElementById('error-text').textContent =
+      "Couldn't read the image. Please ensure the question is clear and try again!";
+    document.getElementById('error-banner').classList.add('show');
+  }
+}
+
+// ── Render ──
+function renderResults(d) {
+  document.getElementById('q-display').textContent = d.question || '';
+  document.getElementById('q-type').textContent = '📐 ' + (d.question_type || 'Math');
+
+  // Steps
+  const sw = document.getElementById('steps-wrap');
+  sw.innerHTML = '';
+  (d.steps || []).forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'step-card' + (i === 0 ? ' open' : '');
+    card.style.animationDelay = `${i * 0.07}s`;
+    card.innerHTML = `
+      <div class="step-hd" onclick="this.parentElement.classList.toggle('open')">
+        <div class="step-num">${i + 1}</div>
+        <span class="step-ttl">${s.title}</span>
+        <span class="step-chev">▾</span>
+      </div>
+      <div class="step-bd">
+        <p class="step-explain">${s.explanation}</p>
+        ${s.working ? `<div class="math-box">${s.working}</div>` : ''}
+        ${s.hint ? `<div class="hint-box"><span class="hint-icon">💡</span><span>${s.hint}</span></div>` : ''}
+      </div>`;
+    sw.appendChild(card);
+  });
+
+  document.getElementById('ans-text').textContent = d.final_answer || '';
+
+  // Tips
+  const tw = document.getElementById('tips-wrap');
+  tw.innerHTML = '';
+  (d.tips || []).forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'tip-item';
+    el.style.animationDelay = `${i * 0.08}s`;
+    el.innerHTML = `<div class="tip-dot">💡</div><div class="tip-text"><b>${t.title}</b>${t.body}</div>`;
+    tw.appendChild(el);
+  });
+
+  // Mistakes
+  const mw = document.getElementById('mistakes-wrap');
+  mw.innerHTML = '';
+  (d.mistakes || []).forEach((m, i) => {
+    const el = document.createElement('div');
+    el.className = 'mistake-item';
+    el.style.animationDelay = `${i * 0.08}s`;
+    el.innerHTML = `
+      <div class="mistake-tag">❌ ${m.mistake}</div>
+      <div class="mistake-why">${m.why_wrong}</div>
+      <div class="correct-chip"><span>Instead: </span>${m.correct}</div>`;
+    mw.appendChild(el);
+  });
+
+  const results = document.getElementById('results');
+  results.classList.add('show');
+  document.getElementById('solve-btn').disabled = false;
+
+  setTimeout(() => {
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 120);
+}
+</script>
+</body>
+</html>
