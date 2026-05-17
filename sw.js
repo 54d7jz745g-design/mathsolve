@@ -1,5 +1,6 @@
-const CACHE = 'psle-solver-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'psle-solver-v2';
+const BASE = '/mathsolve';
+const ASSETS = [BASE + '/', BASE + '/index.html', BASE + '/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -20,6 +21,6 @@ self.addEventListener('fetch', e => {
     return;
   }
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/index.html')))
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match(BASE + '/index.html')))
   );
 });
